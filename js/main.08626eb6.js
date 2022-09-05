@@ -61,7 +61,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "a8fb6913e55d417da175"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "08626eb634957059d542"; // eslint-disable-line no-unused-vars
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule; // eslint-disable-line no-unused-vars
@@ -722,7 +722,7 @@
 /******/ 	__webpack_require__.h = function() { return hotCurrentHash; };
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return hotCreateRequire(6)(__webpack_require__.s = 6);
+/******/ 	return hotCreateRequire(7)(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -732,8 +732,8 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AutoZindex_1 = __webpack_require__(8);
-const guid_1 = __webpack_require__(9);
+const AutoZindex_1 = __webpack_require__(9);
+const guid_1 = __webpack_require__(10);
 // 基础元素
 class BasicElement {
     constructor(option) {
@@ -791,8 +791,8 @@ exports.default = flatArrayChildren;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const getElementPoints_1 = __webpack_require__(13);
-const isCollision_1 = __webpack_require__(14);
+const getElementPoints_1 = __webpack_require__(14);
+const isCollision_1 = __webpack_require__(15);
 function CheckCollision(elms, elm, type, cb) {
     // 更新优化，碰撞检测消耗很大，这里不用和所有的元素检测，根据elm的范围获取一定范围就行了
     // 这个优化没办法通用，必须根据具体应用去做，比如我们这里，单元格是60，子弹是最大占位是20，那么以子弹为中心，100px外的元素显然是不可能发生碰撞的
@@ -859,23 +859,28 @@ exports.default = {
     // 关卡
     shut: {
         // 第一关
-        one: [[60, 60], [180, 60], [300, 60], [420, 60], [540, 60], [660, 60],
-            [60, 120], [180, 120], [300, 120], [420, 120], [540, 120], [660, 120],
-            [60, 180], [180, 180], [300, 180], [420, 180], [540, 180], [660, 180],
-            [60, 240], [180, 240], [540, 240], [660, 240],
-            [300, 300], [420, 300],
-            [0, 360], [120, 360], [180, 360], [540, 360], [600, 360], [720, 360],
-            [0, 420], [720, 420],
-            [0, 480], [720, 480],
-            [60, 480], [180, 480], [540, 480], [660, 480],
-            [60, 540], [180, 540], [540, 540], [660, 540],
-            [60, 600], [180, 600], [540, 600], [660, 600],
-            [60, 660], [180, 660], [540, 660], [660, 660],
-            [300, 420], [420, 420],
-            [300, 480], [360, 480], [420, 480],
-            [300, 540], [420, 540],
-            [300, 660], [360, 660], [420, 660],
-            [300, 720], [420, 720],]
+        one: {
+            tuzhuan: [[60, 60], [180, 60], [300, 60], [420, 60], [540, 60], [660, 60],
+                [60, 120], [180, 120], [300, 120], [420, 120], [540, 120], [660, 120],
+                [60, 180], [180, 180], [300, 180], [420, 180], [540, 180], [660, 180],
+                [60, 240], [180, 240], [540, 240], [660, 240],
+                [120, 360], [180, 360], [540, 360], [600, 360],
+                [60, 480], [180, 480], [540, 480], [660, 480],
+                [60, 540], [180, 540], [540, 540], [660, 540],
+                [60, 600], [180, 600], [540, 600], [660, 600],
+                [60, 660], [180, 660], [540, 660], [660, 660],
+                [300, 420], [420, 420],
+                [300, 480], [360, 480], [420, 480],
+                [300, 540], [420, 540],
+                [300, 660], [360, 660], [420, 660],
+                [300, 720], [420, 720]],
+            tiezhuan: [
+                [0, 360], [720, 360],
+            ],
+            shuizhuan: [
+                [300, 300], [420, 300],
+            ]
+        }
     },
     // 舞台信息
     stage: {
@@ -962,24 +967,140 @@ exports.default = Vector;
 
 "use strict";
 
+// 子弹，从起点位置到终点位置，中间做碰撞检测，碰撞了就销毁
 Object.defineProperty(exports, "__esModule", { value: true });
-const Brick_1 = __webpack_require__(7);
-const Stage_1 = __webpack_require__(10);
-const Tank_1 = __webpack_require__(11);
+const BasicElement_1 = __webpack_require__(0);
+const CheckCollision_1 = __webpack_require__(2);
+const flatArrayChildren_1 = __webpack_require__(1);
+const Timer_1 = __webpack_require__(3);
+class Bullet extends BasicElement_1.default {
+    constructor(option) {
+        super(option);
+        this.sx = option.sx;
+        this.sy = option.sy;
+        this.ex = option.ex;
+        this.ey = option.ey;
+        this.x = this.sx;
+        this.y = this.sy;
+        this.status = 1;
+        this.w = option.w;
+        this.h = option.h;
+        this.hurt = option.hurt || 1;
+        this.direction = option.direction; // 直接初始化传入即可，不再更新，子弹不拐弯
+        this.type = "EnemyBullet";
+        this.directionImage = {
+            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1cf340800f0e476f8a49c601f77ee3ca~tplv-k3u1fbpfcp-watermark.image?",
+            "right": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70c72db3e5fe4c7fb5102723aaac7fc5~tplv-k3u1fbpfcp-watermark.image?",
+            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/32d4613039964a069e302307b64c46e0~tplv-k3u1fbpfcp-watermark.image?",
+            "left": "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/00aa9225712c45979c4ef85913b0f305~tplv-k3u1fbpfcp-watermark.image?",
+        };
+        this.image = new Image();
+        this.image.src = this.directionImage[this.direction];
+        this.speed = 10; // 根据这个speed和fps算出dx和dy,
+        this.fps = 16;
+        // 初始化就发射出去
+        this.fire();
+    }
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+    }
+    destroy() {
+        this.status = 0;
+        this.timer.clear();
+        this.parent.remove(this);
+    }
+    fire() {
+        this.timer = new Timer_1.default(() => {
+            // 从初始位置逐渐运动到终止位置，这里暂时只处理y，x不变，100次（可以优化成动态速率）
+            // this.y += this.ey / 1000
+            // 进行碰撞检测
+            // 先拿到场景里所有要检测碰撞的元素，这里固定获取TextElm
+            // let elms = flatArrayChildren(this.parent.children);
+            // let textElms = elms.filter(item => item.type == "TextElm")
+            // let p = false
+            // for(let i = 0;i < textElms.length;i++) {
+            //     if(isCollision(getElementPoints(textElms[i]), getElementPoints(this))) {
+            //         p = true
+            //         return
+            //     }
+            // }
+            // // 更新 如果碰了，就停止变化，这里只考虑y，因为下面有元素，y就被托住了
+            // if(!p) {
+            //     this.y += this.ey / 1000
+            // }
+            // if(this.y >= this.ey) {
+            //     this.timer.clear()
+            // }
+            // 子弹需要考虑碰撞，有子弹对敌方坦克的，也有敌方子弹对我们坦克的，还有子弹对墙体的，墙体还要分类型，子弹还要分等级和类型，这里简化一点，任何东西和子弹对上了，就挂了
+            let elms = flatArrayChildren_1.default(this.parent.children);
+            let p = CheckCollision_1.default(elms, this, ["Brick", "Tank", "Heart"], (elm) => {
+                elm.gotShot(this.hurt);
+                this.destroy();
+            });
+            if (!p) {
+                this.x += this.ex - this.sx != 0 ? Math.sign(this.ex - this.sx) * this.speed : 0;
+                this.y += this.ey - this.sy != 0 ? Math.sign(this.ey - this.sy) * this.speed : 0;
+            }
+            if (this.x < -10 || this.x > 1210 || this.y < -10 || this.y > 810) {
+                this.destroy();
+            }
+        }, this.fps);
+    }
+}
+exports.default = Bullet;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Brick_1 = __webpack_require__(8);
+const Stage_1 = __webpack_require__(11);
+const Tank_1 = __webpack_require__(12);
 const Config_1 = __webpack_require__(4);
-const Heart_1 = __webpack_require__(18);
-const EnemyTank_1 = __webpack_require__(19);
+const Heart_1 = __webpack_require__(19);
+const EnemyTank_1 = __webpack_require__(20);
+const SteelBrick_1 = __webpack_require__(21);
+const WaterBrick_1 = __webpack_require__(22);
+const SeniorEnemyTank_1 = __webpack_require__(23);
+const Star_1 = __webpack_require__(24);
+const Throttle_1 = __webpack_require__(25);
 // 初始化一个800 * 700的舞台
 let s2 = new Stage_1.default(document.getElementById("stage"));
-let tuzhuans = Config_1.default.shut.one;
-tuzhuans.forEach(item => {
-    let t = new Brick_1.default({
-        x: item[0],
-        y: item[1],
-        w: Config_1.default.tuzhuan.w,
-        h: Config_1.default.tuzhuan.h
+let allzhuan = Config_1.default.shut.one;
+Object.keys(allzhuan).forEach(key => {
+    allzhuan[key].forEach(item => {
+        if (key == "tuzhuan") {
+            let t = new Brick_1.default({
+                x: item[0],
+                y: item[1],
+                w: Config_1.default.tuzhuan.w,
+                h: Config_1.default.tuzhuan.h
+            });
+            s2.add(t);
+        }
+        if (key == "tiezhuan") {
+            let t = new SteelBrick_1.default({
+                x: item[0],
+                y: item[1],
+                w: Config_1.default.tuzhuan.w,
+                h: Config_1.default.tuzhuan.h
+            });
+            s2.add(t);
+        }
+        if (key == "shuizhuan") {
+            let t = new WaterBrick_1.default({
+                x: item[0],
+                y: item[1],
+                w: Config_1.default.tuzhuan.w,
+                h: Config_1.default.tuzhuan.h
+            });
+            s2.add(t);
+        }
     });
-    s2.add(t);
 });
 let heart = new Heart_1.default({
     x: Config_1.default.heart.startX,
@@ -995,9 +1116,35 @@ let tank = new Tank_1.default({
     h: Config_1.default.tank.h
 });
 s2.add(tank);
+function tankAction(e) {
+    switch (e.code) {
+        case "ArrowUp":
+            tank.setDirection("up");
+            tank.move();
+            break;
+        case "ArrowRight":
+            tank.setDirection("right");
+            tank.move();
+            break;
+        case "ArrowDown":
+            tank.setDirection("down");
+            tank.move();
+            break;
+        case "ArrowLeft":
+            tank.setDirection("left");
+            tank.move();
+            break;
+        case "Space":
+            tank.fire();
+            break;
+        default:
+            break;
+    }
+}
+let throttleTankMove = Throttle_1.default(tankAction, 100);
 document.getElementById("btn-begin").addEventListener("click", () => {
-    let enemyTanks = [[60, 0], [180, 0], [300, 0], [420, 0], [540, 0], [660, 0],
-        [180, 420], [540, 420]];
+    document.body.removeChild(document.getElementById("btn-begin"));
+    let enemyTanks = [[60, 0], [180, 0], [300, 0], [420, 0]];
     enemyTanks.forEach(item => {
         let t = new EnemyTank_1.default({
             x: item[0],
@@ -1008,36 +1155,51 @@ document.getElementById("btn-begin").addEventListener("click", () => {
         t.action();
         s2.add(t);
     });
-    document.addEventListener("keyup", (e) => {
-        switch (e.code) {
-            case "ArrowUp":
-                tank.setDirection("up");
-                tank.move();
-                break;
-            case "ArrowRight":
-                tank.setDirection("right");
-                tank.move();
-                break;
-            case "ArrowDown":
-                tank.setDirection("down");
-                tank.move();
-                break;
-            case "ArrowLeft":
-                tank.setDirection("left");
-                tank.move();
-                break;
-            case "Space":
-                tank.fire();
-                break;
-            default:
-                break;
-        }
+    let senemyTanks = [[540, 0], [660, 0], [180, 420], [540, 420]];
+    senemyTanks.forEach(item => {
+        let t = new SeniorEnemyTank_1.default({
+            x: item[0],
+            y: item[1],
+            w: 60,
+            h: 60
+        });
+        t.action();
+        s2.add(t);
     });
+    // let set = new SeniorEnemyTank({
+    //     x: 720,
+    //     y: 720,
+    //     w: 60,
+    //     h: 60
+    // })
+    // s2.add(set)
+    // let set2 = new SeniorEnemyTank({
+    //     x: 720,
+    //     y: 660,
+    //     w: 60,
+    //     h: 60
+    // })
+    // s2.add(set2)
+    // let set2 = new EnemyTank({
+    //     x: 720,
+    //     y: 660,
+    //     w: 60,
+    //     h: 60
+    // })
+    // s2.add(set2)
+    let star = new Star_1.default({
+        x: 480,
+        y: 500,
+        w: 30,
+        h: 30
+    });
+    s2.add(star);
+    document.addEventListener("keydown", throttleTankMove);
 });
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1058,6 +1220,9 @@ class Brick extends BasicElement_1.default {
     draw(ctx) {
         ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
     }
+    gotShot() {
+        this.destroy();
+    }
     destroy() {
         this.parent.remove(this);
     }
@@ -1071,7 +1236,7 @@ exports.default = Brick;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1106,7 +1271,7 @@ exports.default = AutoZindex;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1122,7 +1287,7 @@ exports.default = guid;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1244,14 +1409,14 @@ exports.default = Stage;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const BasicElement_1 = __webpack_require__(0);
-const Bullet_1 = __webpack_require__(12);
+const Bullet_1 = __webpack_require__(13);
 const flatArrayChildren_1 = __webpack_require__(1);
 const Config_1 = __webpack_require__(4);
 const CheckCollision_1 = __webpack_require__(2);
@@ -1274,6 +1439,7 @@ class Tank extends BasicElement_1.default {
         this.image.src = this.directionImage[this.direction];
         this.parent = null;
         this.speed = 10;
+        this.star = 0;
         this.bullet = null;
     }
     draw(ctx) {
@@ -1288,6 +1454,9 @@ class Tank extends BasicElement_1.default {
     setDirection(d) {
         this.direction = d;
     }
+    gotShot() {
+        this.destroy();
+    }
     destroy() {
         this.parent.remove(this);
     }
@@ -1300,8 +1469,12 @@ class Tank extends BasicElement_1.default {
                     this.y -= this.speed;
                 }
                 elms = flatArrayChildren_1.default(this.parent.children);
-                CheckCollision_1.default(elms, this, ["Brick", "EnemyTank"], (elm) => {
+                CheckCollision_1.default(elms, this, ["WaterBrick", "SteelBrick", "Brick", "EnemyTank", "SeniorEnemyTank"], (elm) => {
                     this.y += this.speed;
+                });
+                // 单独加上吃道具逻辑，后续可以扩展
+                CheckCollision_1.default(elms, this, ["Star"], (elm) => {
+                    elm.eat(this);
                 });
                 break;
             case "right":
@@ -1309,8 +1482,12 @@ class Tank extends BasicElement_1.default {
                     this.x += this.speed;
                 }
                 elms = flatArrayChildren_1.default(this.parent.children);
-                CheckCollision_1.default(elms, this, ["Brick", "EnemyTank"], (elm) => {
+                CheckCollision_1.default(elms, this, ["WaterBrick", "SteelBrick", "Brick", "EnemyTank", "SeniorEnemyTank"], (elm) => {
                     this.x -= this.speed;
+                });
+                // 单独加上吃道具逻辑，后续可以扩展
+                CheckCollision_1.default(elms, this, ["Star"], (elm) => {
+                    elm.eat(this);
                 });
                 break;
             case "down":
@@ -1318,8 +1495,12 @@ class Tank extends BasicElement_1.default {
                     this.y += this.speed;
                 }
                 elms = flatArrayChildren_1.default(this.parent.children);
-                CheckCollision_1.default(elms, this, ["Brick", "EnemyTank"], (elm) => {
+                CheckCollision_1.default(elms, this, ["WaterBrick", "SteelBrick", "Brick", "EnemyTank", "SeniorEnemyTank"], (elm) => {
                     this.y -= this.speed;
+                });
+                // 单独加上吃道具逻辑，后续可以扩展
+                CheckCollision_1.default(elms, this, ["Star"], (elm) => {
+                    elm.eat(this);
                 });
                 break;
             case "left":
@@ -1327,8 +1508,462 @@ class Tank extends BasicElement_1.default {
                     this.x -= this.speed;
                 }
                 elms = flatArrayChildren_1.default(this.parent.children);
-                CheckCollision_1.default(elms, this, ["Brick", "EnemyTank"], (elm) => {
+                CheckCollision_1.default(elms, this, ["WaterBrick", "SteelBrick", "Brick", "EnemyTank", "SeniorEnemyTank"], (elm) => {
                     this.x += this.speed;
+                });
+                // 单独加上吃道具逻辑，后续可以扩展
+                CheckCollision_1.default(elms, this, ["Star"], (elm) => {
+                    elm.eat(this);
+                });
+                break;
+        }
+    }
+    fire() {
+        var _a;
+        let opt = {};
+        if ((_a = this.bullet) === null || _a === void 0 ? void 0 : _a.status) {
+            return;
+        }
+        switch (this.direction) {
+            case "up":
+                opt = {
+                    sx: this.x + this.w / 2 - Config_1.default.bullet.w / 2,
+                    sy: this.y - Config_1.default.bullet.h,
+                    ex: this.x + this.w / 2 - Config_1.default.bullet.w / 2,
+                    ey: -Config_1.default.bullet.h,
+                    w: Config_1.default.bullet.w,
+                    h: Config_1.default.bullet.h,
+                    direction: "up",
+                    hurt: this.star + 1
+                };
+                break;
+            case "right":
+                opt = {
+                    sx: this.x + this.w,
+                    sy: this.y + this.h / 2 - Config_1.default.bullet.w / 2,
+                    ex: Config_1.default.stage.w + Config_1.default.bullet.h,
+                    ey: this.y + this.h / 2 - Config_1.default.bullet.w / 2,
+                    w: Config_1.default.bullet.h,
+                    h: Config_1.default.bullet.w,
+                    direction: "right",
+                    hurt: this.star + 1
+                };
+                break;
+            case "down":
+                opt = {
+                    sx: this.x + this.w / 2 - Config_1.default.bullet.w / 2,
+                    sy: this.y + this.h,
+                    ex: this.x + this.w / 2 - Config_1.default.bullet.w / 2,
+                    ey: Config_1.default.stage.h + Config_1.default.bullet.h,
+                    w: Config_1.default.bullet.w,
+                    h: Config_1.default.bullet.h,
+                    direction: "down",
+                    hurt: this.star + 1
+                };
+                break;
+            case "left":
+                opt = {
+                    sx: this.x - Config_1.default.bullet.h,
+                    sy: this.y + this.h / 2 - Config_1.default.bullet.w / 2,
+                    ex: -Config_1.default.bullet.h,
+                    ey: this.y + this.h / 2 - Config_1.default.bullet.w / 2,
+                    w: Config_1.default.bullet.h,
+                    h: Config_1.default.bullet.w,
+                    direction: "left",
+                    hurt: this.star + 1
+                };
+                break;
+            default:
+                break;
+        }
+        this.bullet = new Bullet_1.default(opt);
+        this.parent.add(this.bullet);
+    }
+}
+exports.default = Tank;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// 子弹，从起点位置到终点位置，中间做碰撞检测，碰撞了就销毁
+Object.defineProperty(exports, "__esModule", { value: true });
+const BasicElement_1 = __webpack_require__(0);
+const CheckCollision_1 = __webpack_require__(2);
+const flatArrayChildren_1 = __webpack_require__(1);
+const Timer_1 = __webpack_require__(3);
+class Bullet extends BasicElement_1.default {
+    constructor(option) {
+        super(option);
+        this.sx = option.sx;
+        this.sy = option.sy;
+        this.ex = option.ex;
+        this.ey = option.ey;
+        this.x = this.sx;
+        this.y = this.sy;
+        this.w = option.w;
+        this.h = option.h;
+        this.status = 1;
+        this.hurt = option.hurt || 1;
+        this.direction = option.direction; // 直接初始化传入即可，不再更新，子弹不拐弯
+        this.type = "Bullet";
+        this.image = new Image();
+        this.directionImage = {
+            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1cf340800f0e476f8a49c601f77ee3ca~tplv-k3u1fbpfcp-watermark.image?",
+            "right": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70c72db3e5fe4c7fb5102723aaac7fc5~tplv-k3u1fbpfcp-watermark.image?",
+            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/32d4613039964a069e302307b64c46e0~tplv-k3u1fbpfcp-watermark.image?",
+            "left": "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/00aa9225712c45979c4ef85913b0f305~tplv-k3u1fbpfcp-watermark.image?",
+        };
+        this.image.src = this.directionImage[this.direction];
+        this.speed = 10; // 根据这个speed和fps算出dx和dy,
+        this.fps = 16;
+        // 初始化就发射出去
+        this.fire();
+    }
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+    }
+    destroy() {
+        this.status = 0;
+        this.timer.clear();
+        this.parent.remove(this);
+    }
+    fire() {
+        this.timer = new Timer_1.default(() => {
+            // 从初始位置逐渐运动到终止位置，这里暂时只处理y，x不变，100次（可以优化成动态速率）
+            // this.y += this.ey / 1000
+            // 进行碰撞检测
+            // 先拿到场景里所有要检测碰撞的元素，这里固定获取TextElm
+            // let elms = flatArrayChildren(this.parent.children);
+            // let textElms = elms.filter(item => item.type == "TextElm")
+            // let p = false
+            // for(let i = 0;i < textElms.length;i++) {
+            //     if(isCollision(getElementPoints(textElms[i]), getElementPoints(this))) {
+            //         p = true
+            //         return
+            //     }
+            // }
+            // // 更新 如果碰了，就停止变化，这里只考虑y，因为下面有元素，y就被托住了
+            // if(!p) {
+            //     this.y += this.ey / 1000
+            // }
+            // if(this.y >= this.ey) {
+            //     this.timer.clear()
+            // }
+            // let dx = this.ex - this.sx != 0 ? (this.speed * this.fps) / (this.ex - this.sx) : 0
+            // let dy = this.ey - this.sy != 0 ? (this.speed * this.fps) / (this.ey - this.sy) : 0
+            // 子弹需要考虑碰撞，有子弹对敌方坦克的，也有敌方子弹对我们坦克的，还有子弹对墙体的，墙体还要分类型，子弹还要分等级和类型，这里简化一点，任何东西和子弹对上了，就挂了
+            let elms = flatArrayChildren_1.default(this.parent.children);
+            let p = CheckCollision_1.default(elms, this, ["SteelBrick", "Brick", "EnemyTank", "Heart", "SeniorEnemyTank"], (elm) => {
+                this.destroy();
+                elm.gotShot(this.hurt);
+            });
+            if (!p) {
+                this.x += this.ex - this.sx != 0 ? Math.sign(this.ex - this.sx) * this.speed : 0;
+                this.y += this.ey - this.sy != 0 ? Math.sign(this.ey - this.sy) * this.speed : 0;
+            }
+            if (this.x < -10 || this.x > 1210 || this.y < -10 || this.y > 810) {
+                this.destroy();
+            }
+        }, this.fps);
+    }
+}
+exports.default = Bullet;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function getElementPoints(element) {
+    let t = [];
+    t.push({
+        x: element.x,
+        y: element.y,
+    });
+    t.push({
+        x: element.x + element.w,
+        y: element.y,
+    });
+    t.push({
+        x: element.x + element.w,
+        y: element.y + element.h,
+    });
+    t.push({
+        x: element.x,
+        y: element.y + element.h,
+    });
+    return {
+        points: t,
+    };
+}
+exports.default = getElementPoints;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const getAxes_1 = __webpack_require__(16);
+const getProjection_1 = __webpack_require__(17);
+function isCollision(poly, poly2) {
+    let axes1 = getAxes_1.default(poly.points);
+    let axes2 = getAxes_1.default(poly2.points);
+    let axes = [...axes1, ...axes2];
+    for (let ax of axes) {
+        let p1 = getProjection_1.default(ax, poly.points);
+        let p2 = getProjection_1.default(ax, poly2.points);
+        if (!p1.overlaps(p2)) {
+            return false;
+        }
+    }
+    return true;
+}
+exports.default = isCollision;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Vector_1 = __webpack_require__(5);
+// 获取多个点的所有投影轴
+function getAxes(points) {
+    let axes = [];
+    for (let i = 0, j = points.length - 1; i < j; i++) {
+        let v1 = new Vector_1.default(points[i].x, points[i].y);
+        let v2 = new Vector_1.default(points[i + 1].x, points[i + 1].y);
+        axes.push(v1.sub(v2).perp().unit());
+    }
+    let firstPoint = points[0];
+    let lastPoint = points[points.length - 1];
+    let v1 = new Vector_1.default(lastPoint.x, lastPoint.y);
+    let v2 = new Vector_1.default(firstPoint.x, firstPoint.y);
+    axes.push(v1.sub(v2).perp().unit());
+    return axes;
+}
+exports.default = getAxes;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Projection_1 = __webpack_require__(18);
+const Vector_1 = __webpack_require__(5);
+// 获取投影轴上的投影，参数为投影轴向量
+function getProjection(v, points) {
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    points.forEach(point => {
+        let p = new Vector_1.default(point.x, point.y);
+        let dotProduct = p.dot(v);
+        min = Math.min(min, dotProduct);
+        max = Math.max(max, dotProduct);
+    });
+    return new Projection_1.default(min, max);
+}
+exports.default = getProjection;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// 投影
+class Projection {
+    constructor(min, max) {
+        this.min = min;
+        this.max = max;
+    }
+    // 2个投影是否重叠
+    overlaps(p) {
+        return this.max > p.min && this.min < p.max;
+    }
+}
+exports.default = Projection;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const BasicElement_1 = __webpack_require__(0);
+class Heart extends BasicElement_1.default {
+    constructor(option) {
+        super(option);
+        this.x = option.x;
+        this.y = option.y;
+        this.w = option.w;
+        this.h = option.h;
+        this.type = "Heart";
+        this.image = new Image();
+        this.image.src = "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f68715959d4e4576813677bc2a96ae68~tplv-k3u1fbpfcp-watermark.image?";
+    }
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+    }
+    gotShot() {
+        this.destroy();
+    }
+    destroy() {
+        // 心脏都被摧毁了，直接GG
+        this.parent.remove(this);
+        alert("GG");
+        location.reload();
+    }
+    pointInElement(x, y) {
+        // 假设内置close大小为20*20，在元素右上角
+        // 这个判断还是要加上offset，更新后，子元素的xy就是container的xy
+        return this.x <= x && this.y <= y && this.x + this.w >= x && this.y + this.h >= y;
+    }
+}
+exports.default = Heart;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const BasicElement_1 = __webpack_require__(0);
+const flatArrayChildren_1 = __webpack_require__(1);
+const Config_1 = __webpack_require__(4);
+const Timer_1 = __webpack_require__(3);
+const EnemyBullet_1 = __webpack_require__(6);
+const CheckCollision_1 = __webpack_require__(2);
+class EnemyTank extends BasicElement_1.default {
+    constructor(option) {
+        super({});
+        this.x = option.x;
+        this.y = option.y;
+        this.w = option.w;
+        this.h = option.h;
+        this.type = "EnemyTank";
+        this.direction = "down";
+        this.directionImage = {
+            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b0e5a75625244b448aa1c55685600ede~tplv-k3u1fbpfcp-watermark.image?",
+            "right": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d1730fe64e54f7b95827c5ec5670616~tplv-k3u1fbpfcp-watermark.image?",
+            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0a6ec18d23fd437f880b150d09bef42d~tplv-k3u1fbpfcp-watermark.image?",
+            "left": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7e99ded7a1e3496cb46671dd1a35f6ad~tplv-k3u1fbpfcp-watermark.image?",
+        };
+        this.image = new Image();
+        this.image.src = this.directionImage[this.direction];
+        this.parent = null;
+        this.speed = 10;
+        this.actionTimer = null;
+        this.moveTimer = null;
+        this.bullet = null;
+    }
+    draw(ctx) {
+        this.image.src = this.directionImage[this.direction];
+        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+    }
+    pointInElement(x, y) {
+        // 假设内置close大小为20*20，在元素右上角
+        // 这个判断还是要加上offset，更新后，子元素的xy就是container的xy
+        return this.x <= x && this.y <= y && this.x + this.w >= x && this.y + this.h >= y;
+    }
+    setDirection(d) {
+        this.direction = d;
+    }
+    gotShot() {
+        this.destroy();
+    }
+    destroy() {
+        this.actionTimer && this.actionTimer.clear();
+        this.moveTimer && this.moveTimer.clear();
+        this.parent.remove(this);
+    }
+    action() {
+        this.actionTimer = new Timer_1.default(() => {
+            this.fire();
+        }, 800);
+        this.moveTimer = new Timer_1.default(() => {
+            this.move();
+        }, 800);
+    }
+    randomDirection() {
+        this.setDirection(['up', 'down', 'right', 'left'][Math.floor(Math.random() * 4)]);
+    }
+    move() {
+        let elms;
+        // 即将碰撞，先处理xy，如果碰撞了返还
+        switch (this.direction) {
+            case "up":
+                if (this.y >= this.speed) {
+                    this.y -= this.speed;
+                }
+                else {
+                    this.randomDirection();
+                }
+                elms = flatArrayChildren_1.default(this.parent.children);
+                CheckCollision_1.default(elms, this, ["Brick", "Tank", "EnemyTank", "SeniorEnemyTank"], (elm) => {
+                    this.y += this.speed;
+                    // 碰到墙了就随机换方向
+                    this.randomDirection();
+                });
+                break;
+            case "right":
+                if (this.x < Config_1.default.stage.w - Config_1.default.tank.w) {
+                    this.x += this.speed;
+                }
+                else {
+                    this.randomDirection();
+                }
+                elms = flatArrayChildren_1.default(this.parent.children);
+                CheckCollision_1.default(elms, this, ["Brick", "Tank", "EnemyTank", "SeniorEnemyTank"], (elm) => {
+                    this.x -= this.speed;
+                    this.randomDirection();
+                });
+                break;
+            case "down":
+                if (this.y < Config_1.default.stage.h - Config_1.default.tank.h) {
+                    this.y += this.speed;
+                }
+                else {
+                    this.randomDirection();
+                }
+                elms = flatArrayChildren_1.default(this.parent.children);
+                CheckCollision_1.default(elms, this, ["Brick", "Tank", "EnemyTank", "SeniorEnemyTank"], (elm) => {
+                    this.y -= this.speed;
+                    this.randomDirection();
+                });
+                break;
+            case "left":
+                if (this.x >= this.speed) {
+                    this.x -= this.speed;
+                }
+                else {
+                    this.randomDirection();
+                }
+                elms = flatArrayChildren_1.default(this.parent.children);
+                CheckCollision_1.default(elms, this, ["Brick", "Tank", "EnemyTank", "SeniorEnemyTank"], (elm) => {
+                    this.x += this.speed;
+                    this.randomDirection();
                 });
                 break;
         }
@@ -1387,271 +2022,82 @@ class Tank extends BasicElement_1.default {
             default:
                 break;
         }
-        this.bullet = new Bullet_1.default(opt);
+        this.bullet = new EnemyBullet_1.default(opt);
         this.parent.add(this.bullet);
     }
 }
-exports.default = Tank;
+exports.default = EnemyTank;
 
 
 /***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 子弹，从起点位置到终点位置，中间做碰撞检测，碰撞了就销毁
-Object.defineProperty(exports, "__esModule", { value: true });
-const BasicElement_1 = __webpack_require__(0);
-const CheckCollision_1 = __webpack_require__(2);
-const flatArrayChildren_1 = __webpack_require__(1);
-const Timer_1 = __webpack_require__(3);
-class Bullet extends BasicElement_1.default {
-    constructor(option) {
-        super(option);
-        this.sx = option.sx;
-        this.sy = option.sy;
-        this.ex = option.ex;
-        this.ey = option.ey;
-        this.x = this.sx;
-        this.y = this.sy;
-        this.w = option.w;
-        this.h = option.h;
-        this.status = 1;
-        this.direction = option.direction; // 直接初始化传入即可，不再更新，子弹不拐弯
-        this.type = "Bullet";
-        this.image = new Image();
-        this.directionImage = {
-            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1cf340800f0e476f8a49c601f77ee3ca~tplv-k3u1fbpfcp-watermark.image?",
-            "right": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70c72db3e5fe4c7fb5102723aaac7fc5~tplv-k3u1fbpfcp-watermark.image?",
-            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/32d4613039964a069e302307b64c46e0~tplv-k3u1fbpfcp-watermark.image?",
-            "left": "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/00aa9225712c45979c4ef85913b0f305~tplv-k3u1fbpfcp-watermark.image?",
-        };
-        this.image.src = this.directionImage[this.direction];
-        this.speed = 10; // 根据这个speed和fps算出dx和dy,
-        this.fps = 16;
-        // 初始化就发射出去
-        this.fire();
-    }
-    draw(ctx) {
-        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
-    }
-    destroy() {
-        this.status = 0;
-        this.parent.remove(this);
-    }
-    fire() {
-        this.timer = new Timer_1.default(() => {
-            // 从初始位置逐渐运动到终止位置，这里暂时只处理y，x不变，100次（可以优化成动态速率）
-            // this.y += this.ey / 1000
-            // 进行碰撞检测
-            // 先拿到场景里所有要检测碰撞的元素，这里固定获取TextElm
-            // let elms = flatArrayChildren(this.parent.children);
-            // let textElms = elms.filter(item => item.type == "TextElm")
-            // let p = false
-            // for(let i = 0;i < textElms.length;i++) {
-            //     if(isCollision(getElementPoints(textElms[i]), getElementPoints(this))) {
-            //         p = true
-            //         return
-            //     }
-            // }
-            // // 更新 如果碰了，就停止变化，这里只考虑y，因为下面有元素，y就被托住了
-            // if(!p) {
-            //     this.y += this.ey / 1000
-            // }
-            // if(this.y >= this.ey) {
-            //     this.timer.clear()
-            // }
-            // let dx = this.ex - this.sx != 0 ? (this.speed * this.fps) / (this.ex - this.sx) : 0
-            // let dy = this.ey - this.sy != 0 ? (this.speed * this.fps) / (this.ey - this.sy) : 0
-            // 子弹需要考虑碰撞，有子弹对敌方坦克的，也有敌方子弹对我们坦克的，还有子弹对墙体的，墙体还要分类型，子弹还要分等级和类型，这里简化一点，任何东西和子弹对上了，就挂了
-            let elms = flatArrayChildren_1.default(this.parent.children);
-            let p = CheckCollision_1.default(elms, this, ["Brick", "EnemyTank", "Heart"], (elm) => {
-                elm.destroy();
-                this.destroy();
-                this.timer.clear();
-            });
-            if (!p) {
-                this.x += this.ex - this.sx != 0 ? Math.sign(this.ex - this.sx) * this.speed : 0;
-                this.y += this.ey - this.sy != 0 ? Math.sign(this.ey - this.sy) * this.speed : 0;
-            }
-            if (this.x < -10 || this.x > 1210 || this.y < -10 || this.y > 810) {
-                this.destroy();
-                this.timer.clear();
-            }
-        }, this.fps);
-    }
-}
-exports.default = Bullet;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function getElementPoints(element) {
-    let t = [];
-    t.push({
-        x: element.x,
-        y: element.y,
-    });
-    t.push({
-        x: element.x + element.w,
-        y: element.y,
-    });
-    t.push({
-        x: element.x + element.w,
-        y: element.y + element.h,
-    });
-    t.push({
-        x: element.x,
-        y: element.y + element.h,
-    });
-    return {
-        points: t,
-    };
-}
-exports.default = getElementPoints;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const getAxes_1 = __webpack_require__(15);
-const getProjection_1 = __webpack_require__(16);
-function isCollision(poly, poly2) {
-    let axes1 = getAxes_1.default(poly.points);
-    let axes2 = getAxes_1.default(poly2.points);
-    let axes = [...axes1, ...axes2];
-    for (let ax of axes) {
-        let p1 = getProjection_1.default(ax, poly.points);
-        let p2 = getProjection_1.default(ax, poly2.points);
-        if (!p1.overlaps(p2)) {
-            return false;
-        }
-    }
-    return true;
-}
-exports.default = isCollision;
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Vector_1 = __webpack_require__(5);
-// 获取多个点的所有投影轴
-function getAxes(points) {
-    let axes = [];
-    for (let i = 0, j = points.length - 1; i < j; i++) {
-        let v1 = new Vector_1.default(points[i].x, points[i].y);
-        let v2 = new Vector_1.default(points[i + 1].x, points[i + 1].y);
-        axes.push(v1.sub(v2).perp().unit());
-    }
-    let firstPoint = points[0];
-    let lastPoint = points[points.length - 1];
-    let v1 = new Vector_1.default(lastPoint.x, lastPoint.y);
-    let v2 = new Vector_1.default(firstPoint.x, firstPoint.y);
-    axes.push(v1.sub(v2).perp().unit());
-    return axes;
-}
-exports.default = getAxes;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Projection_1 = __webpack_require__(17);
-const Vector_1 = __webpack_require__(5);
-// 获取投影轴上的投影，参数为投影轴向量
-function getProjection(v, points) {
-    let min = Number.MAX_SAFE_INTEGER;
-    let max = Number.MIN_SAFE_INTEGER;
-    points.forEach(point => {
-        let p = new Vector_1.default(point.x, point.y);
-        let dotProduct = p.dot(v);
-        min = Math.min(min, dotProduct);
-        max = Math.max(max, dotProduct);
-    });
-    return new Projection_1.default(min, max);
-}
-exports.default = getProjection;
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-// 投影
-class Projection {
-    constructor(min, max) {
-        this.min = min;
-        this.max = max;
-    }
-    // 2个投影是否重叠
-    overlaps(p) {
-        return this.max > p.min && this.min < p.max;
-    }
-}
-exports.default = Projection;
-
-
-/***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const BasicElement_1 = __webpack_require__(0);
-class Heart extends BasicElement_1.default {
+class SteelBrick extends BasicElement_1.default {
     constructor(option) {
         super({});
         this.x = option.x;
         this.y = option.y;
         this.w = option.w;
         this.h = option.h;
-        this.type = "Heart";
+        this.type = "SteelBrick";
         this.image = new Image();
-        this.image.src = "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f68715959d4e4576813677bc2a96ae68~tplv-k3u1fbpfcp-watermark.image?";
+        this.image.src = "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b1d344bb8024465288dddd59cf04c1fd~tplv-k3u1fbpfcp-watermark.image?";
+    }
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+    }
+    gotShot() {
+        // do nothing
+    }
+    destroy() {
+        this.parent.remove(this);
+    }
+    pointInElement(x, y) {
+        return this.x <= x && this.y <= y && this.x + this.w >= x && this.y + this.h >= y;
+    }
+}
+exports.default = SteelBrick;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const BasicElement_1 = __webpack_require__(0);
+class WaterBrick extends BasicElement_1.default {
+    constructor(option) {
+        super({});
+        this.x = option.x;
+        this.y = option.y;
+        this.w = option.w;
+        this.h = option.h;
+        this.type = "WaterBrick";
+        this.image = new Image();
+        this.image.src = "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/235172dd563c40ceaff26677d1d9765a~tplv-k3u1fbpfcp-watermark.image?";
     }
     draw(ctx) {
         ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
     }
     destroy() {
-        // 心脏都被摧毁了，直接GG
-        console.log("Game Over");
         this.parent.remove(this);
-        alert("GG");
     }
     pointInElement(x, y) {
-        // 假设内置close大小为20*20，在元素右上角
-        // 这个判断还是要加上offset，更新后，子元素的xy就是container的xy
         return this.x <= x && this.y <= y && this.x + this.w >= x && this.y + this.h >= y;
     }
 }
-exports.default = Heart;
+exports.default = WaterBrick;
 
 
 /***/ }),
-/* 19 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1661,23 +2107,24 @@ const BasicElement_1 = __webpack_require__(0);
 const flatArrayChildren_1 = __webpack_require__(1);
 const Config_1 = __webpack_require__(4);
 const Timer_1 = __webpack_require__(3);
-const EnemyBullet_1 = __webpack_require__(20);
+const EnemyBullet_1 = __webpack_require__(6);
 const CheckCollision_1 = __webpack_require__(2);
-class EnemyTank extends BasicElement_1.default {
+class SeniorEnemyTank extends BasicElement_1.default {
     constructor(option) {
         super({});
         this.x = option.x;
         this.y = option.y;
         this.w = option.w;
         this.h = option.h;
-        this.type = "EnemyTank";
+        this.type = "SeniorEnemyTank";
         this.direction = "down";
         this.directionImage = {
-            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b0e5a75625244b448aa1c55685600ede~tplv-k3u1fbpfcp-watermark.image?",
-            "right": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d1730fe64e54f7b95827c5ec5670616~tplv-k3u1fbpfcp-watermark.image?",
-            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0a6ec18d23fd437f880b150d09bef42d~tplv-k3u1fbpfcp-watermark.image?",
-            "left": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7e99ded7a1e3496cb46671dd1a35f6ad~tplv-k3u1fbpfcp-watermark.image?",
+            "up": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/51aba0e4e8b34e779c4756afe4893b63~tplv-k3u1fbpfcp-watermark.image?",
+            "right": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/05551f12df3a45ef8507fddd509a24e1~tplv-k3u1fbpfcp-watermark.image?",
+            "down": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70eb1fad055c46758d258e2d178ca6e1~tplv-k3u1fbpfcp-watermark.image?",
+            "left": "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e56d3c82e63f4dcc9ae1f3032058822a~tplv-k3u1fbpfcp-watermark.image?",
         };
+        this.lifeCount = 4;
         this.image = new Image();
         this.image.src = this.directionImage[this.direction];
         this.parent = null;
@@ -1698,6 +2145,12 @@ class EnemyTank extends BasicElement_1.default {
     setDirection(d) {
         this.direction = d;
     }
+    gotShot(hurt) {
+        this.lifeCount -= hurt;
+        if (this.lifeCount <= 0) {
+            this.destroy();
+        }
+    }
     destroy() {
         this.actionTimer && this.actionTimer.clear();
         this.moveTimer && this.moveTimer.clear();
@@ -1706,10 +2159,10 @@ class EnemyTank extends BasicElement_1.default {
     action() {
         this.actionTimer = new Timer_1.default(() => {
             this.fire();
-        }, 400);
+        }, 600);
         this.moveTimer = new Timer_1.default(() => {
             this.move();
-        }, 400);
+        }, 600);
     }
     randomDirection() {
         this.setDirection(['up', 'down', 'right', 'left'][Math.floor(Math.random() * 4)]);
@@ -1831,98 +2284,78 @@ class EnemyTank extends BasicElement_1.default {
         this.parent.add(this.bullet);
     }
 }
-exports.default = EnemyTank;
+exports.default = SeniorEnemyTank;
 
 
 /***/ }),
-/* 20 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-// 子弹，从起点位置到终点位置，中间做碰撞检测，碰撞了就销毁
 Object.defineProperty(exports, "__esModule", { value: true });
 const BasicElement_1 = __webpack_require__(0);
-const CheckCollision_1 = __webpack_require__(2);
-const flatArrayChildren_1 = __webpack_require__(1);
-const Timer_1 = __webpack_require__(3);
-class Bullet extends BasicElement_1.default {
+class Star extends BasicElement_1.default {
     constructor(option) {
         super(option);
-        this.sx = option.sx;
-        this.sy = option.sy;
-        this.ex = option.ex;
-        this.ey = option.ey;
-        this.x = this.sx;
-        this.y = this.sy;
-        this.status = 1;
+        this.x = option.x;
+        this.y = option.y;
         this.w = option.w;
         this.h = option.h;
-        this.direction = option.direction; // 直接初始化传入即可，不再更新，子弹不拐弯
-        this.type = "EnemyBullet";
-        this.directionImage = {
-            "up": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1cf340800f0e476f8a49c601f77ee3ca~tplv-k3u1fbpfcp-watermark.image?",
-            "right": "https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70c72db3e5fe4c7fb5102723aaac7fc5~tplv-k3u1fbpfcp-watermark.image?",
-            "down": "https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/32d4613039964a069e302307b64c46e0~tplv-k3u1fbpfcp-watermark.image?",
-            "left": "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/00aa9225712c45979c4ef85913b0f305~tplv-k3u1fbpfcp-watermark.image?",
-        };
+        this.type = "Star";
         this.image = new Image();
-        this.image.src = this.directionImage[this.direction];
-        this.speed = 10; // 根据这个speed和fps算出dx和dy,
-        this.fps = 16;
-        // 初始化就发射出去
-        this.fire();
+        this.image.src = "https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ff55a350760744afbd08653ebdae1e1f~tplv-k3u1fbpfcp-watermark.image?";
     }
     draw(ctx) {
         ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
     }
+    eat(elm) {
+        // 星星不中弹，但是会被坦克吃，给吃的目标升级
+        elm.star++;
+        this.destroy();
+    }
     destroy() {
-        this.status = 0;
         this.parent.remove(this);
     }
-    fire() {
-        this.timer = new Timer_1.default(() => {
-            // 从初始位置逐渐运动到终止位置，这里暂时只处理y，x不变，100次（可以优化成动态速率）
-            // this.y += this.ey / 1000
-            // 进行碰撞检测
-            // 先拿到场景里所有要检测碰撞的元素，这里固定获取TextElm
-            // let elms = flatArrayChildren(this.parent.children);
-            // let textElms = elms.filter(item => item.type == "TextElm")
-            // let p = false
-            // for(let i = 0;i < textElms.length;i++) {
-            //     if(isCollision(getElementPoints(textElms[i]), getElementPoints(this))) {
-            //         p = true
-            //         return
-            //     }
-            // }
-            // // 更新 如果碰了，就停止变化，这里只考虑y，因为下面有元素，y就被托住了
-            // if(!p) {
-            //     this.y += this.ey / 1000
-            // }
-            // if(this.y >= this.ey) {
-            //     this.timer.clear()
-            // }
-            // 子弹需要考虑碰撞，有子弹对敌方坦克的，也有敌方子弹对我们坦克的，还有子弹对墙体的，墙体还要分类型，子弹还要分等级和类型，这里简化一点，任何东西和子弹对上了，就挂了
-            let elms = flatArrayChildren_1.default(this.parent.children);
-            let p = CheckCollision_1.default(elms, this, ["Brick", "Tank", "Heart"], (elm) => {
-                elm.destroy();
-                this.destroy();
-                this.timer.clear();
-            });
-            if (!p) {
-                this.x += this.ex - this.sx != 0 ? Math.sign(this.ex - this.sx) * this.speed : 0;
-                this.y += this.ey - this.sy != 0 ? Math.sign(this.ey - this.sy) * this.speed : 0;
-            }
-            if (this.x < -10 || this.x > 1210 || this.y < -10 || this.y > 810) {
-                this.destroy();
-                this.timer.clear();
-            }
-        }, this.fps);
+    pointInElement(x, y) {
+        // 假设内置close大小为20*20，在元素右上角
+        // 这个判断还是要加上offset，更新后，子元素的xy就是container的xy
+        return this.x <= x && this.y <= y && this.x + this.w >= x && this.y + this.h >= y;
     }
 }
-exports.default = Bullet;
+exports.default = Star;
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function Throttle(fn, delay) {
+    var last, deferTime;
+    return function (args) {
+        var that = this;
+        var now = +new Date();
+        // 接着如果上个时间间隔里已经执行了fn，last存在，且时间间隔还未结束，设置一个定时器间隔执行，且重置last时间
+        if (last && now < last + delay) {
+            clearTimeout(deferTime);
+            deferTime = setTimeout(function () {
+                last = now;
+                fn.call(that, args);
+            }, delay);
+        }
+        else {
+            // 一进来的时候last为空，直接执行fn，然后把执行时间记录为last
+            last = now;
+            fn.call(that, args);
+        }
+    };
+}
+exports.default = Throttle;
 
 
 /***/ })
 /******/ ]);
-//# sourceMappingURL=main.a8fb6913.js.map
+//# sourceMappingURL=main.08626eb6.js.map
